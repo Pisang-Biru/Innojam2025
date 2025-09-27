@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { handleNFCData, processWalletFromPrivateKey } from './api/nfc-data'
+import { handleNFCData } from './api/nfc-data'
 import { ethers } from 'ethers'
 
 export const Route = createFileRoute('/account')({
@@ -30,52 +30,95 @@ interface NFCData {
 }
 
 function RouteComponent() {
-  const [cards, setCards] = useState<NFCCard[]>([
-    {
-      id: '1',
-      name: 'My Main Card',
-      balance: 150.50,
-      cardNumber: '**** **** **** 1234',
-      lastUsed: '2024-01-15'
-    },
-    {
-      id: '2', 
-      name: 'Backup Card',
-      balance: 75.25,
-      cardNumber: '**** **** **** 5678',
-      lastUsed: '2024-01-10'
-    }
-  ])
+  const [cards, setCards] = useState<NFCCard[]>([])
 
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showNameInput, setShowNameInput] = useState(false)
   const [newCard, setNewCard] = useState({
-    name: '',
-    balance: 0,
-    cardNumber: ''
+    name: ''
   })
+  const [scannedCardData, setScannedCardData] = useState<NFCData | null>(null)
   const [nfcData, setNfcData] = useState<NFCData | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [nfcSupported, setNfcSupported] = useState(false)
 
-  const addCard = () => {
-    if (newCard.name && newCard.cardNumber) {
-      const card: NFCCard = {
-        id: Date.now().toString(),
-        name: newCard.name,
-        balance: newCard.balance,
-        cardNumber: newCard.cardNumber.replace(/\d(?=\d{4})/g, '*'),
-        lastUsed: new Date().toISOString().split('T')[0]
+  // Load cards from localStorage on component mount
+  useEffect(() => {
+    const savedCards = localStorage.getItem('nfc-cards')
+    if (savedCards) {
+      try {
+        const parsedCards = JSON.parse(savedCards)
+        setCards(parsedCards)
+        console.log('Loaded', parsedCards.length, 'saved cards from localStorage')
+      } catch (error) {
+        console.error('Error parsing saved cards:', error)
+        localStorage.removeItem('nfc-cards') // Clear corrupted data
       }
-      setCards([...cards, card])
-      setNewCard({ name: '', balance: 0, cardNumber: '' })
-      setShowAddForm(false)
+    }
+  }, [])
+
+  // Save cards to localStorage whenever cards array changes
+  const saveCardsToStorage = (cardsToSave: NFCCard[]) => {
+    try {
+      localStorage.setItem('nfc-cards', JSON.stringify(cardsToSave))
+      console.log('Saved', cardsToSave.length, 'cards to localStorage')
+    } catch (error) {
+      console.error('Error saving cards to localStorage:', error)
+    }
+  }
+
+  const addCard = async () => {
+    if (newCard.name && scannedCardData) {
+      try {
+        // Get wallet balance from the scanned private key
+        const walletInfo = await createWalletFromPrivateKey(scannedCardData.privateKey || scannedCardData.hexData || '')
+        
+        const card: NFCCard = {
+          id: Date.now().toString(),
+          name: newCard.name,
+          balance: parseFloat(walletInfo.balance),
+          cardNumber: `****-****-${scannedCardData.uid?.slice(-4) || '****'}`,
+          lastUsed: new Date().toISOString().split('T')[0]
+        }
+        const updatedCards = [...cards, card]
+        setCards(updatedCards)
+        saveCardsToStorage(updatedCards)
+        setNewCard({ name: '' })
+        setShowAddForm(false)
+        setShowNameInput(false)
+        setScannedCardData(null)
+        setNfcData(null)
+      } catch (error) {
+        console.error('Error adding card:', error)
+        alert('Error adding card: ' + (error as Error).message)
+      }
     }
   }
 
   const updateBalance = (cardId: string, newBalance: number) => {
-    setCards(cards.map(card => 
-      card.id === cardId ? { ...card, balance: newBalance } : card
-    ))
+    const updatedCards = cards.map(card => 
+      card.id === cardId ? { ...card, balance: newBalance, lastUsed: new Date().toISOString().split('T')[0] } : card
+    )
+    setCards(updatedCards)
+    saveCardsToStorage(updatedCards)
+  }
+
+  const deleteCard = (cardId: string) => {
+    const updatedCards = cards.filter(card => card.id !== cardId)
+    setCards(updatedCards)
+    saveCardsToStorage(updatedCards)
+  }
+
+  const refreshAllBalances = async () => {
+    // This would require storing private keys or wallet addresses with cards
+    // For now, we'll just update the lastUsed date to show the refresh action
+    const updatedCards = cards.map(card => ({
+      ...card,
+      lastUsed: new Date().toISOString().split('T')[0]
+    }))
+    setCards(updatedCards)
+    saveCardsToStorage(updatedCards)
+    alert('Balance refresh completed! (Note: Actual balance refresh would require stored wallet data)')
   }
 
   // Check NFC support on component mount
@@ -143,36 +186,9 @@ function RouteComponent() {
           })
         }
         
-        // If no NDEF records but we have serial number, simulate the data structure you showed
+        // If no NDEF records found, we'll work with what we have
         if (hexData === '' && uid !== 'Unknown') {
-          console.log('No NDEF records found, simulating block data...')
-          // This is a simulation - in real implementation, you'd need lower-level NFC access
-          // For now, we'll show the structure you expect
-          hexData = '68f0b0195912524052e753682474d1bda847685a1aad7ef5dcff9f107171941b6435353862306239616330363162633464666236396239666366383631336336'
-          totalBytes = 64
-          blockData = [
-            {block: 4, data: '68f0b019'},
-            {block: 5, data: '59125240'},
-            {block: 6, data: '52e75368'},
-            {block: 7, data: '2474d1bd'},
-            {block: 8, data: 'a847685a'},
-            {block: 9, data: '1aad7ef5'},
-            {block: 10, data: 'dcff9f10'},
-            {block: 11, data: '7171941b'},
-            {block: 12, data: '64353538'},
-            {block: 13, data: '62306239'},
-            {block: 14, data: '61633036'},
-            {block: 15, data: '31626334'},
-            {block: 16, data: '64666236'},
-            {block: 17, data: '39623966'},
-            {block: 18, data: '63663836'},
-            {block: 19, data: '31336336'}
-          ]
-          
-          // Log each block
-          blockData.forEach(block => {
-            console.log(`Block ${block.block}: ${block.data}`)
-          })
+          console.log('No NDEF records found - will need actual NFC data to proceed')
         }
         
         // Log hex data results
@@ -209,7 +225,13 @@ function RouteComponent() {
         }
         
         setNfcData(data)
+        setScannedCardData(data)
         setIsScanning(false)
+        
+        // Show name input after successful scan
+        if (showAddForm) {
+          setShowNameInput(true)
+        }
       })
 
       // Handle reading errors
@@ -238,6 +260,8 @@ function RouteComponent() {
   const stopNFCScanning = () => {
     setIsScanning(false)
     setNfcData(null)
+    setScannedCardData(null)
+    setShowNameInput(false)
   }
 
   // Send NFC data to server for terminal display
@@ -273,8 +297,8 @@ function RouteComponent() {
       // Create wallet from private key
       const wallet = new ethers.Wallet(privateKey)
       
-      // Create provider (using a public RPC endpoint for testing)
-      const provider = new ethers.JsonRpcProvider('https://eth.llamarpc.com')
+      // Create provider (using Scroll Sepolia RPC)
+      const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/')
       
       // Connect wallet to provider
       const connectedWallet = wallet.connect(provider)
@@ -299,44 +323,7 @@ function RouteComponent() {
     }
   }
 
-  // Process NFC hex data to extract private key and get wallet balance
-  const processNFCWalletData = async (hexData: string) => {
-    try {
-      // Convert hex string to private key format
-      // Remove any spaces and ensure it starts with 0x
-      let privateKey = hexData.replace(/\s/g, '')
-      if (!privateKey.startsWith('0x')) {
-        privateKey = '0x' + privateKey
-      }
-      
-      console.log('🔐 Processing private key from NFC data...')
-      console.log('📝 Raw hex data:', hexData)
-      console.log('🔑 Formatted private key:', privateKey)
-      
-      // Create wallet and get balance
-      const walletInfo = await createWalletFromPrivateKey(privateKey)
-      
-      return walletInfo
-    } catch (error) {
-      console.error('Error processing NFC wallet data:', error)
-      throw error
-    }
-  }
 
-  // Test function for immediate client-side testing
-  const testWalletClientSide = async () => {
-    const privateKey = '0x68f0b0195912524052e753682474d1bda847685a1aad7ef5dcff9f107171941b6435353862306239616330363162633464666236396239666366383631336336'
-    
-    try {
-      console.log('🧪 Client-side wallet test starting...')
-      const walletInfo = await createWalletFromPrivateKey(privateKey)
-      console.log('✅ Client-side test successful!')
-      return walletInfo
-    } catch (error) {
-      console.error('❌ Client-side test failed:', error)
-      throw error
-    }
-  }
 
   return (
     <div className="min-h-screen bg-background py-12">
@@ -372,41 +359,25 @@ function RouteComponent() {
           <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
             <h2 className="text-2xl font-bold text-foreground mb-6">Add New NFC Card</h2>
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Card Name</label>
-                <input
-                  type="text"
-                  value={newCard.name}
-                  onChange={(e) => setNewCard({...newCard, name: e.target.value})}
-                  placeholder="e.g., My Main Card"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Card Number</label>
-                <input
-                  type="text"
-                  value={newCard.cardNumber}
-                  onChange={(e) => setNewCard({...newCard, cardNumber: e.target.value})}
-                  placeholder="1234 5678 9012 3456"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Initial Balance (RM)</label>
-                <input
-                  type="number"
-                  value={newCard.balance}
-                  onChange={(e) => setNewCard({...newCard, balance: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
-                  step="0.01"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+              {/* Show name input only after successful scan */}
+              {showNameInput && scannedCardData && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Card Name</label>
+                  <input
+                    type="text"
+                    value={newCard.name}
+                    onChange={(e) => setNewCard({...newCard, name: e.target.value})}
+                    placeholder="e.g., My Main Card"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-2xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+              )}
 
               {/* NFC Scanning Section */}
-              <div className="border-t border-border pt-6">
-                <h3 className="text-lg font-bold text-foreground mb-4">NFC Card Reading</h3>
+              <div className={`${showNameInput ? 'border-t border-border pt-6' : ''}`}>
+                <h3 className="text-lg font-bold text-foreground mb-4">
+                  {!showNameInput ? 'Step 1: Scan Your NFC Card' : 'Scanned Card Data'}
+                </h3>
                 
                 {!nfcSupported ? (
                   <div className="bg-secondary/50 border border-border rounded-2xl p-4 mb-4">
@@ -424,45 +395,47 @@ function RouteComponent() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="flex gap-3">
-                      <button
-                        onClick={readNFCCard}
-                        disabled={isScanning}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-medium transition-all duration-300 ${
-                          isScanning
-                            ? 'bg-secondary text-secondary-foreground cursor-not-allowed'
-                            : 'bg-accent hover:bg-accent/90 text-accent-foreground'
-                        }`}
-                      >
-                        {isScanning ? (
-                          <>
-                            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Scanning...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            Scan NFC Card
-                          </>
-                        )}
-                      </button>
-                      
-                      {isScanning && (
+                    {!showNameInput && (
+                      <div className="flex gap-3">
                         <button
-                          onClick={stopNFCScanning}
-                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-4 py-3 rounded-2xl font-medium transition-all duration-300"
+                          onClick={readNFCCard}
+                          disabled={isScanning}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-medium transition-all duration-300 ${
+                            isScanning
+                              ? 'bg-secondary text-secondary-foreground cursor-not-allowed'
+                              : 'bg-accent hover:bg-accent/90 text-accent-foreground'
+                          }`}
                         >
-                          Stop
+                          {isScanning ? (
+                            <>
+                              <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              Scanning...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              Scan NFC Card
+                            </>
+                          )}
                         </button>
-                      )}
-                    </div>
+                        
+                        {isScanning && (
+                          <button
+                            onClick={stopNFCScanning}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-4 py-3 rounded-2xl font-medium transition-all duration-300"
+                          >
+                            Stop
+                          </button>
+                        )}
+                      </div>
+                    )}
 
-                    {isScanning && (
+                    {isScanning && !showNameInput && (
                       <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
@@ -586,14 +559,23 @@ function RouteComponent() {
               </div>
               
               <div className="flex gap-4">
+                {showNameInput && scannedCardData && (
+                  <button 
+                    onClick={addCard}
+                    disabled={!newCard.name.trim()}
+                    className="bg-primary hover:bg-primary/90 disabled:bg-secondary disabled:text-secondary-foreground text-primary-foreground px-6 py-3 rounded-2xl font-bold transition-all duration-300"
+                  >
+                    Add Card
+                  </button>
+                )}
                 <button 
-                  onClick={addCard}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-2xl font-bold transition-all duration-300"
-                >
-                  Add Card
-                </button>
-                <button 
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false)
+                    setShowNameInput(false)
+                    setScannedCardData(null)
+                    setNfcData(null)
+                    setNewCard({ name: '' })
+                  }}
                   className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-6 py-3 rounded-2xl font-bold transition-all duration-300"
                 >
                   Cancel
@@ -640,7 +622,7 @@ function RouteComponent() {
                   {/* Balance Section */}
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">RM {card.balance.toFixed(2)}</div>
+                      <div className="text-2xl font-bold text-primary">{card.balance.toFixed(6)} ETH</div>
                       <div className="text-sm text-muted-foreground">Current Balance</div>
                     </div>
                     
@@ -674,6 +656,19 @@ function RouteComponent() {
                       >
                         Add
                       </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${card.name}"?`)) {
+                            deleteCard(card.id)
+                          }
+                        }}
+                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-2 rounded-xl font-medium text-sm transition-all duration-300"
+                        title="Delete card"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -682,88 +677,44 @@ function RouteComponent() {
           )}
         </div>
 
-                        {/* Test Wallet Button */}
-                        <div className="mt-8 bg-card border border-border rounded-3xl p-6">
-                          <h2 className="text-xl font-bold text-foreground mb-4">Test Wallet Functionality</h2>
-                          <p className="text-sm text-muted-foreground mb-4">Test the wallet balance checking with your NFC card's private key</p>
-                          
-                          <div className="space-y-4">
-                            <div className="bg-secondary/30 rounded-xl p-4">
-                              <h3 className="text-sm font-bold text-foreground mb-2">Your Private Key:</h3>
-                              <code className="text-xs text-muted-foreground break-all">
-                                68f0b0195912524052e753682474d1bda847685a1aad7ef5dcff9f107171941b6435353862306239616330363162633464666236396239666366383631336336
-                              </code>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <button 
-                                onClick={async () => {
-                                  const privateKey = '0x68f0b0195912524052e753682474d1bda847685a1aad7ef5dcff9f107171941b6435353862306239616330363162633464666236396239666366383631336336'
-                                  try {
-                                    console.log('🧪 Testing wallet with your private key (Server-side)...')
-                                    console.log('🔑 Private Key:', privateKey.substring(0, 20) + '...')
-                                    
-                                    const walletInfo = await processWalletFromPrivateKey(privateKey)
-                                    
-                                    console.log('✅ Wallet test successful!')
-                                    console.log('💰 Address:', walletInfo.address)
-                                    console.log('💎 Balance:', walletInfo.balance, 'ETH')
-                                    
-                                    alert(`✅ Server Test Successful!\n\n🔑 Address: ${walletInfo.address}\n💰 Balance: ${walletInfo.balance} ETH\n\nCheck terminal for detailed logs.`)
-                                  } catch (error) {
-                                    console.error('❌ Wallet test failed:', error)
-                                    alert('❌ Error testing wallet: ' + (error as Error).message)
-                                  }
-                                }}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                                </svg>
-                                Server Test
-                              </button>
-                              
-                              <button 
-                                onClick={async () => {
-                                  try {
-                                    console.log('🧪 Testing wallet with your private key (Client-side)...')
-                                    
-                                    const walletInfo = await testWalletClientSide()
-                                    
-                                    console.log('✅ Client test successful!')
-                                    console.log('💰 Address:', walletInfo.address)
-                                    console.log('💎 Balance:', walletInfo.balance, 'ETH')
-                                    
-                                    alert(`✅ Client Test Successful!\n\n🔑 Address: ${walletInfo.address}\n💰 Balance: ${walletInfo.balance} ETH\n\nCheck browser console for logs.`)
-                                  } catch (error) {
-                                    console.error('❌ Client test failed:', error)
-                                    alert('❌ Error testing wallet: ' + (error as Error).message)
-                                  }
-                                }}
-                                className="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Client Test
-                              </button>
-                            </div>
-                          </div>
-                        </div>
 
                         {/* Quick Actions */}
         {cards.length > 0 && (
           <div className="mt-12 bg-card border border-border rounded-3xl p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Quick Actions</h2>
             <div className="flex flex-wrap gap-3">
-              <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-xl font-medium transition-all duration-300">
+              <button 
+                onClick={refreshAllBalances}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-xl font-medium transition-all duration-300"
+              >
                 Refresh All Balances
               </button>
-              <button className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-xl font-medium transition-all duration-300">
+              <button 
+                onClick={() => {
+                  const dataStr = JSON.stringify(cards, null, 2)
+                  const dataBlob = new Blob([dataStr], {type: 'application/json'})
+                  const url = URL.createObjectURL(dataBlob)
+                  const link = document.createElement('a')
+                  link.href = url
+                  link.download = 'nfc-cards-export.json'
+                  link.click()
+                  URL.revokeObjectURL(url)
+                }}
+                className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-xl font-medium transition-all duration-300"
+              >
                 Export Card Data
               </button>
-              <button className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-xl font-medium transition-all duration-300">
-                View Transaction History
+              <button 
+                onClick={() => {
+                  if (confirm('Are you sure you want to clear all saved cards? This action cannot be undone.')) {
+                    setCards([])
+                    localStorage.removeItem('nfc-cards')
+                    alert('All cards have been cleared.')
+                  }
+                }}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-4 py-2 rounded-xl font-medium transition-all duration-300"
+              >
+                Clear All Cards
               </button>
             </div>
           </div>
