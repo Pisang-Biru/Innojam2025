@@ -20,6 +20,7 @@ import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-qu
 import { Route as ApiTest2RouteImport } from './routes/api.test2'
 import { Route as ApiTestRouteImport } from './routes/api/test'
 import { Route as ApiNfcDataRouteImport } from './routes/api/nfc-data'
+import { Route as AdminTransactionRouteImport } from './routes/admin/transaction'
 import { Route as AdminReadItemRouteImport } from './routes/admin/read-item'
 import { Route as AdminPayRouteImport } from './routes/admin/pay'
 import { Route as AdminCreateItemRouteImport } from './routes/admin/create-item'
@@ -75,6 +76,11 @@ const ApiNfcDataRoute = ApiNfcDataRouteImport.update({
   path: '/api/nfc-data',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminTransactionRoute = AdminTransactionRouteImport.update({
+  id: '/admin/transaction',
+  path: '/admin/transaction',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminReadItemRoute = AdminReadItemRouteImport.update({
   id: '/admin/read-item',
   path: '/admin/read-item',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/admin/create-item': typeof AdminCreateItemRoute
   '/admin/pay': typeof AdminPayRoute
   '/admin/read-item': typeof AdminReadItemRoute
+  '/admin/transaction': typeof AdminTransactionRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/admin/create-item': typeof AdminCreateItemRoute
   '/admin/pay': typeof AdminPayRoute
   '/admin/read-item': typeof AdminReadItemRoute
+  '/admin/transaction': typeof AdminTransactionRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/admin/create-item': typeof AdminCreateItemRoute
   '/admin/pay': typeof AdminPayRoute
   '/admin/read-item': typeof AdminReadItemRoute
+  '/admin/transaction': typeof AdminTransactionRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/admin/create-item'
     | '/admin/pay'
     | '/admin/read-item'
+    | '/admin/transaction'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/admin/create-item'
     | '/admin/pay'
     | '/admin/read-item'
+    | '/admin/transaction'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/admin/create-item'
     | '/admin/pay'
     | '/admin/read-item'
+    | '/admin/transaction'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -227,6 +239,7 @@ export interface RootRouteChildren {
   AdminCreateItemRoute: typeof AdminCreateItemRoute
   AdminPayRoute: typeof AdminPayRoute
   AdminReadItemRoute: typeof AdminReadItemRoute
+  AdminTransactionRoute: typeof AdminTransactionRoute
   ApiNfcDataRoute: typeof ApiNfcDataRoute
   ApiTestRoute: typeof ApiTestRoute
   ApiTest2Route: typeof ApiTest2Route
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNfcDataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/transaction': {
+      id: '/admin/transaction'
+      path: '/admin/transaction'
+      fullPath: '/admin/transaction'
+      preLoaderRoute: typeof AdminTransactionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/read-item': {
       id: '/admin/read-item'
       path: '/admin/read-item'
@@ -387,6 +407,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCreateItemRoute: AdminCreateItemRoute,
   AdminPayRoute: AdminPayRoute,
   AdminReadItemRoute: AdminReadItemRoute,
+  AdminTransactionRoute: AdminTransactionRoute,
   ApiNfcDataRoute: ApiNfcDataRoute,
   ApiTestRoute: ApiTestRoute,
   ApiTest2Route: ApiTest2Route,

@@ -99,7 +99,7 @@ export class NFCApiService {
     return this.makeRequest('/');
   }
 
-  // Read hex data from NFC tag
+  // Read hex data from NFC tag 
   async readHexFromNFC(): Promise<ReadHexResponse> {
     return this.makeRequest<ReadHexResponse>('/read-pk');
   }

@@ -2,7 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { nfcApi, type ItemResponse } from '@/lib/nfc-api'
+import { nfcApi, type ItemResponse, type ReadHexResponse } from '@/lib/nfc-api'
+import { ethers } from 'ethers'
 
 export const Route = createFileRoute('/admin/pay')({
   component: RouteComponent,
@@ -19,6 +20,8 @@ function RouteComponent() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [error, setError] = useState<string>('')
   const [lastScannedItem, setLastScannedItem] = useState<ItemResponse | null>(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentSuccess, setPaymentSuccess] = useState<string>('')
 
   const clearError = () => setError('')
 
@@ -88,11 +91,66 @@ function RouteComponent() {
     setLastScannedItem(null)
   }
 
-  // Process payment (placeholder)
-  const processPayment = () => {
-    alert(`Processing payment for $${getTotalPrice().toFixed(2)}`)
-    // Here you would integrate with actual payment processing
-    clearCart()
+  // Process payment with NFC card scan
+  const processPayment = async () => {
+    if (cart.length === 0) return
+
+    setPaymentLoading(true)
+    setError('')
+    setPaymentSuccess('')
+
+    try {
+      // Step 1: Scan NFC card to get private key
+      const nfcData: ReadHexResponse = await nfcApi.readHexFromNFC()
+      
+      if (!nfcData.hex_data) {
+        throw new Error('No hex data found on NFC card')
+      }
+
+      // Step 2: Use hex data as private key
+      const privateKey = nfcData.hex_data.startsWith('0x') ? nfcData.hex_data : `0x${nfcData.hex_data}`
+      
+      // Step 3: Create wallet from private key
+      const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/') // Using Scroll Sepolia testnet
+      const wallet = new ethers.Wallet(privateKey, provider)
+
+      // Step 4: Calculate payment amount in ETH (assuming 1 USD = 0.0003 ETH for demo)
+      const totalPriceUSD = getTotalPrice()
+      const ethAmount = (totalPriceUSD * 0.0003).toFixed(6) // Convert USD to ETH
+      const amountInWei = ethers.parseEther(ethAmount)
+
+      // Step 5: Prepare transaction
+      const recipientAddress = '0x0Dc22cEe7d3Ae46d448afDB4a654946EaA20eB4D'
+      
+      const transaction = {
+        to: recipientAddress,
+        value: amountInWei,
+        gasLimit: 21000,
+      }
+
+      // Step 6: Send transaction
+      const txResponse = await wallet.sendTransaction(transaction)
+      
+      // Step 7: Wait for confirmation
+      const receipt = await txResponse.wait()
+      
+      if (receipt && receipt.status === 1) {
+        setPaymentSuccess(`Payment successful! Transaction hash: ${receipt.hash}`)
+        clearCart()
+      } else {
+        throw new Error('Transaction failed')
+      }
+
+    } catch (err) {
+      console.error('Payment error:', err)
+      if (err instanceof Error) {
+        setError(`Payment failed: ${err.message}`)
+      } else {
+        setError('Payment failed: Unknown error occurred')
+      }
+    } finally {
+      setPaymentLoading(false)
+    }
   }
 
   return (
@@ -286,16 +344,49 @@ function RouteComponent() {
                 
                 <Button 
                   onClick={processPayment}
+                  disabled={paymentLoading}
                   className="w-full"
                   size="lg"
                 >
-                  Process Payment - ${getTotalPrice().toFixed(2)}
+                  {paymentLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Processing Payment...
+                    </div>
+                  ) : (
+                    `Pay with NFC Card - $${getTotalPrice().toFixed(2)}`
+                  )}
                 </Button>
+                
+                <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg border border-blue-200 mt-3">
+                  <strong>💳 Payment Process:</strong> Click to scan your NFC card with private key. 
+                  The system will automatically transfer ${(getTotalPrice() * 0.0003).toFixed(6)} ETH to the merchant on Scroll Sepolia network.
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
+
+      {/* Payment Success Message */}
+      {paymentSuccess && (
+        <Card className="mt-6 border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-700">Payment Successful! 🎉</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-green-600 text-sm">{paymentSuccess}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setPaymentSuccess('')}
+              className="mt-3"
+            >
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* API Status */}
       <Card className="mt-6">
@@ -304,12 +395,18 @@ function RouteComponent() {
           <CardDescription>NFC Scanner & Payment System</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm">Connected to http://192.168.0.171:8000/read-items</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm">NFC Reader: Connected to http://192.168.0.171:8000/read-items</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm">Blockchain: Connected to Scroll Sepolia (https://sepolia-rpc.scroll.io/)</span>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            NFC reader ready for item scanning
+            NFC reader ready for item scanning and payment processing on Scroll network
           </p>
         </CardContent>
       </Card>
