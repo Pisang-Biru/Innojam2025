@@ -22,13 +22,13 @@ export default function Header() {
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors font-medium">
               Contact
             </a>
+            <a href="/account" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+              My Account
+            </a>
           </nav>
 
           {/* Action buttons section */}
           <div className="flex items-center space-x-4">
-            <button className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              Sign In
-            </button>
             <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-2xl font-bold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
               Get Started
             </button>
