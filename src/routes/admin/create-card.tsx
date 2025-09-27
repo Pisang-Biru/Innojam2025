@@ -3,36 +3,83 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { nfcApi, type CreatePkRequest, type CreatePkResponse } from '@/lib/nfc-api'
+import { Input } from '@/components/ui/input'
+import { nfcApi, type WriteHexResponse } from '@/lib/nfc-api'
+import { ethers } from 'ethers'
 
 export const Route = createFileRoute('/admin/create-card')({
   component: RouteComponent,
 })
 
+interface PrivateKeyCardResults {
+  private_key: string;
+  public_key: string;
+  address: string;
+  uid?: string;
+  message: string;
+}
+
 function RouteComponent() {
   // State management
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<CreatePkResponse | null>(null)
+  const [results, setResults] = useState<PrivateKeyCardResults | null>(null)
   const [error, setError] = useState<string>('')
-
-  // Form state (if needed for additional parameters)
-  const [formData] = useState<CreatePkRequest>({})
+  const [privateKeyInput, setPrivateKeyInput] = useState<string>('')
 
   const clearResults = () => {
     setResults(null)
     setError('')
   }
 
+  // Validate private key format
+  const validatePrivateKey = (privateKey: string): boolean => {
+    // Remove 0x prefix if present
+    const cleanKey = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey
+    // Check if it's a valid 64-character hex string
+    return /^[0-9a-fA-F]{64}$/.test(cleanKey)
+  }
+
   // Handle create private key card
   const handleCreatePkCard = async () => {
+    if (!privateKeyInput.trim()) {
+      setError('Please enter a private key')
+      return
+    }
+
+    if (!validatePrivateKey(privateKeyInput.trim())) {
+      setError('Invalid private key format. Please enter a valid 64-character hexadecimal private key.')
+      return
+    }
+
     setLoading(true)
     clearResults()
 
     try {
-      const result: CreatePkResponse = await nfcApi.createPkCard(formData)
-      setResults(result)
+      // Clean the private key input
+      const cleanPrivateKey = privateKeyInput.trim()
+      const privateKeyWithPrefix = cleanPrivateKey.startsWith('0x') ? cleanPrivateKey : `0x${cleanPrivateKey}`
+      
+      // Create wallet from the provided private key to get public key and address
+      const wallet = new ethers.Wallet(privateKeyWithPrefix)
+      
+      // Get the private key without the '0x' prefix for NFC writing
+      const privateKeyHex = privateKeyWithPrefix.slice(2)
+      
+      // Write the private key to NFC card
+      const writeResult: WriteHexResponse = await nfcApi.writeHexToNFC(privateKeyHex)
+      
+      // Create the results object
+      const results: PrivateKeyCardResults = {
+        private_key: privateKeyWithPrefix,
+        public_key: wallet.signingKey.publicKey,
+        address: wallet.address,
+        uid: writeResult.uid,
+        message: 'Private key successfully written to NFC card'
+      }
+      
+      setResults(results)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create private key card')
+      setError(err instanceof Error ? err.message : 'Failed to write private key to card')
     } finally {
       setLoading(false)
     }
@@ -43,21 +90,35 @@ function RouteComponent() {
       {/* Create PK Card Form */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Generate Private Key Card</CardTitle>
+          <CardTitle>Write Private Key to NFC Card</CardTitle>
           <CardDescription>
-            This will generate a new private key and write it to an NFC card. 
+            Enter a private key to write to an NFC card. 
             Make sure you have an NFC card ready to write to.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Add any additional form fields if needed by your create-pk endpoint */}
+          {/* Private Key Input */}
+          <div className="space-y-2">
+            <Label htmlFor="privateKey">Private Key</Label>
+            <Input
+              id="privateKey"
+              type="password"
+              placeholder="Enter private key (with or without 0x prefix)"
+              value={privateKeyInput}
+              onChange={(e) => setPrivateKeyInput(e.target.value)}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Enter a valid 64-character hexadecimal private key. The 0x prefix is optional.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              Click the button below to generate a new private key and write it to your NFC card.
               The process will:
             </p>
             <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-              <li>Generate a new cryptographic private key</li>
+              <li>Validate the private key format</li>
               <li>Derive the corresponding public key and address</li>
               <li>Write the private key data to the NFC card</li>
               <li>Return the key information for your records</li>
@@ -74,17 +135,17 @@ function RouteComponent() {
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Creating Private Key Card...
+                  Writing Private Key to Card...
                 </div>
               ) : (
-                'Create Private Key Card'
+                'Write Private Key to Card'
               )}
             </Button>
           </div>
 
           <div className="text-xs text-muted-foreground bg-yellow-50 p-3 rounded-lg border border-yellow-200">
             <strong>⚠️ Security Notice:</strong> Make sure you're in a secure environment. 
-            The private key will be written to the NFC card and should be kept safe.
+            The private key will be written to the NFC card and should be kept safe. Never share your private key with anyone.
           </div>
         </CardContent>
       </Card>
@@ -113,8 +174,8 @@ function RouteComponent() {
       {results && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-green-600">Private Key Card Created Successfully!</CardTitle>
-            <CardDescription>Your private key has been generated and written to the NFC card</CardDescription>
+            <CardTitle className="text-green-600">Private Key Written Successfully!</CardTitle>
+            <CardDescription>Your private key has been written to the NFC card</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -193,12 +254,12 @@ function RouteComponent() {
       <Card>
         <CardHeader>
           <CardTitle>API Connection</CardTitle>
-          <CardDescription>NFC Private Key Generation Service</CardDescription>
+          <CardDescription>NFC Private Key Writing Service</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm">Connected to http://192.168.0.171:8000/create-pk</span>
+            <span className="text-sm">Connected to http://192.168.0.171:8000/write-pk</span>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             Make sure the Raspberry Pi NFC server is running and an NFC card is ready
