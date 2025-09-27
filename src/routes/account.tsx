@@ -298,7 +298,7 @@ function RouteComponent() {
       const wallet = new ethers.Wallet(privateKey)
       
       // Create provider (using Scroll Sepolia RPC)
-      const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/')
+      const provider = new ethers.JsonRpcProvider('https://arb-mainnet.g.alchemy.com/v2/ywJs2Qqr_ncoGBPXeXMHIekKPC8Ty-_o')
       
       // Connect wallet to provider
       const connectedWallet = wallet.connect(provider)

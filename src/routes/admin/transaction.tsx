@@ -30,7 +30,7 @@ function RouteComponent() {
   const recipientAddress = '0x0Dc22cEe7d3Ae46d448afDB4a654946EaA20eB4D'
 
   // Initialize provider
-  const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/')
+  const provider = new ethers.JsonRpcProvider('https://arb-mainnet.g.alchemy.com/v2/ywJs2Qqr_ncoGBPXeXMHIekKPC8Ty-_o')
 
   // Fetch balance
   const fetchBalance = async () => {
@@ -255,7 +255,7 @@ function RouteComponent() {
             </div>
             <div>
               <p className="text-muted-foreground">RPC Endpoint</p>
-              <p className="font-mono text-xs">https://sepolia-rpc.scroll.io/</p>
+              <p className="font-mono text-xs">https://arb-mainnet.g.alchemy.com/v2/ywJs2Qqr_ncoGBPXeXMHIekKPC8Ty-_o</p>
             </div>
             <div>
               <p className="text-muted-foreground">Merchant Address</p>
