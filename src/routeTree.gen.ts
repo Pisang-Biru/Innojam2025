@@ -20,6 +20,8 @@ import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-qu
 import { Route as ApiTest2RouteImport } from './routes/api.test2'
 import { Route as ApiTestRouteImport } from './routes/api/test'
 import { Route as ApiNfcDataRouteImport } from './routes/api/nfc-data'
+import { Route as AdminReadItemRouteImport } from './routes/admin/read-item'
+import { Route as AdminCreateItemRouteImport } from './routes/admin/create-item'
 import { Route as AdminCreateCardRouteImport } from './routes/admin/create-card'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
@@ -72,6 +74,16 @@ const ApiNfcDataRoute = ApiNfcDataRouteImport.update({
   path: '/api/nfc-data',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReadItemRoute = AdminReadItemRouteImport.update({
+  id: '/admin/read-item',
+  path: '/admin/read-item',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCreateItemRoute = AdminCreateItemRouteImport.update({
+  id: '/admin/create-item',
+  path: '/admin/create-item',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCreateCardRoute = AdminCreateCardRouteImport.update({
   id: '/admin/create-card',
   path: '/admin/create-card',
@@ -100,6 +112,8 @@ export interface FileRoutesByFullPath {
   '/results': typeof ResultsRoute
   '/test': typeof TestRoute
   '/admin/create-card': typeof AdminCreateCardRoute
+  '/admin/create-item': typeof AdminCreateItemRoute
+  '/admin/read-item': typeof AdminReadItemRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -114,6 +128,8 @@ export interface FileRoutesByTo {
   '/results': typeof ResultsRoute
   '/test': typeof TestRoute
   '/admin/create-card': typeof AdminCreateCardRoute
+  '/admin/create-item': typeof AdminCreateItemRoute
+  '/admin/read-item': typeof AdminReadItemRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -129,6 +145,8 @@ export interface FileRoutesById {
   '/results': typeof ResultsRoute
   '/test': typeof TestRoute
   '/admin/create-card': typeof AdminCreateCardRoute
+  '/admin/create-item': typeof AdminCreateItemRoute
+  '/admin/read-item': typeof AdminReadItemRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -145,6 +163,8 @@ export interface FileRouteTypes {
     | '/results'
     | '/test'
     | '/admin/create-card'
+    | '/admin/create-item'
+    | '/admin/read-item'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -159,6 +179,8 @@ export interface FileRouteTypes {
     | '/results'
     | '/test'
     | '/admin/create-card'
+    | '/admin/create-item'
+    | '/admin/read-item'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -173,6 +195,8 @@ export interface FileRouteTypes {
     | '/results'
     | '/test'
     | '/admin/create-card'
+    | '/admin/create-item'
+    | '/admin/read-item'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -188,6 +212,8 @@ export interface RootRouteChildren {
   ResultsRoute: typeof ResultsRoute
   TestRoute: typeof TestRoute
   AdminCreateCardRoute: typeof AdminCreateCardRoute
+  AdminCreateItemRoute: typeof AdminCreateItemRoute
+  AdminReadItemRoute: typeof AdminReadItemRoute
   ApiNfcDataRoute: typeof ApiNfcDataRoute
   ApiTestRoute: typeof ApiTestRoute
   ApiTest2Route: typeof ApiTest2Route
@@ -282,6 +308,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNfcDataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/read-item': {
+      id: '/admin/read-item'
+      path: '/admin/read-item'
+      fullPath: '/admin/read-item'
+      preLoaderRoute: typeof AdminReadItemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/create-item': {
+      id: '/admin/create-item'
+      path: '/admin/create-item'
+      fullPath: '/admin/create-item'
+      preLoaderRoute: typeof AdminCreateItemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/create-card': {
       id: '/admin/create-card'
       path: '/admin/create-card'
@@ -324,6 +364,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResultsRoute: ResultsRoute,
   TestRoute: TestRoute,
   AdminCreateCardRoute: AdminCreateCardRoute,
+  AdminCreateItemRoute: AdminCreateItemRoute,
+  AdminReadItemRoute: AdminReadItemRoute,
   ApiNfcDataRoute: ApiNfcDataRoute,
   ApiTestRoute: ApiTestRoute,
   ApiTest2Route: ApiTest2Route,
