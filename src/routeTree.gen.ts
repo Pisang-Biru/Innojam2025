@@ -20,6 +20,7 @@ import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-qu
 import { Route as ApiTest2RouteImport } from './routes/api.test2'
 import { Route as ApiTestRouteImport } from './routes/api/test'
 import { Route as ApiNfcDataRouteImport } from './routes/api/nfc-data'
+import { Route as AdminCreateCardRouteImport } from './routes/admin/create-card'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
 import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
@@ -71,6 +72,11 @@ const ApiNfcDataRoute = ApiNfcDataRouteImport.update({
   path: '/api/nfc-data',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCreateCardRoute = AdminCreateCardRouteImport.update({
+  id: '/admin/create-card',
+  path: '/admin/create-card',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
   path: '/demo/start/server-funcs',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/preferences': typeof PreferencesRoute
   '/results': typeof ResultsRoute
   '/test': typeof TestRoute
+  '/admin/create-card': typeof AdminCreateCardRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/preferences': typeof PreferencesRoute
   '/results': typeof ResultsRoute
   '/test': typeof TestRoute
+  '/admin/create-card': typeof AdminCreateCardRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/preferences': typeof PreferencesRoute
   '/results': typeof ResultsRoute
   '/test': typeof TestRoute
+  '/admin/create-card': typeof AdminCreateCardRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/preferences'
     | '/results'
     | '/test'
+    | '/admin/create-card'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/preferences'
     | '/results'
     | '/test'
+    | '/admin/create-card'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/preferences'
     | '/results'
     | '/test'
+    | '/admin/create-card'
     | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   PreferencesRoute: typeof PreferencesRoute
   ResultsRoute: typeof ResultsRoute
   TestRoute: typeof TestRoute
+  AdminCreateCardRoute: typeof AdminCreateCardRoute
   ApiNfcDataRoute: typeof ApiNfcDataRoute
   ApiTestRoute: typeof ApiTestRoute
   ApiTest2Route: typeof ApiTest2Route
@@ -269,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNfcDataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/create-card': {
+      id: '/admin/create-card'
+      path: '/admin/create-card'
+      fullPath: '/admin/create-card'
+      preLoaderRoute: typeof AdminCreateCardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
       path: '/demo/start/server-funcs'
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreferencesRoute: PreferencesRoute,
   ResultsRoute: ResultsRoute,
   TestRoute: TestRoute,
+  AdminCreateCardRoute: AdminCreateCardRoute,
   ApiNfcDataRoute: ApiNfcDataRoute,
   ApiTestRoute: ApiTestRoute,
   ApiTest2Route: ApiTest2Route,
