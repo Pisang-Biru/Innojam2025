@@ -111,24 +111,29 @@ function RouteComponent() {
       const privateKey = nfcData.hex_data.startsWith('0x') ? nfcData.hex_data : `0x${nfcData.hex_data}`
       
       // Step 3: Create wallet from private key
-      const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/') // Using Scroll Sepolia testnet
+      const provider = new ethers.JsonRpcProvider('https://arb-mainnet.g.alchemy.com/v2/ywJs2Qqr_ncoGBPXeXMHIekKPC8Ty-_o') // Using Arbitrum Mainnet
       const wallet = new ethers.Wallet(privateKey, provider)
 
-      // Step 4: Calculate payment amount in ETH (assuming 1 USD = 0.0003 ETH for demo)
+      // Step 4: Calculate payment amount in MYRC (1:1 with USD)
       const totalPriceUSD = getTotalPrice()
-      const ethAmount = (totalPriceUSD * 0.0003).toFixed(6) // Convert USD to ETH
-      const amountInWei = ethers.parseEther(ethAmount)
+      const amountInMyrc = ethers.parseUnits(totalPriceUSD.toString(), 18) // MYRC uses 18 decimals
 
-      // Step 5: Prepare transaction
+      // Step 5: MYRC contract address on Arbitrum Mainnet
+      const myrcAddress = '0x3eD03E95DD894235090B3d4A49E0C3239EDcE59e'
       const recipientAddress = '0x0Dc22cEe7d3Ae46d448afDB4a654946EaA20eB4D'
-      
+
+      // Step 6: Prepare MYRC transfer transaction
+      const myrcInterface = new ethers.Interface([
+        'function transfer(address to, uint256 amount) returns (bool)'
+      ])
+
       const transaction = {
-        to: recipientAddress,
-        value: amountInWei,
-        gasLimit: 21000,
+        to: myrcAddress,
+        data: myrcInterface.encodeFunctionData('transfer', [recipientAddress, amountInMyrc]),
+        gasLimit: 100000,
       }
 
-      // Step 6: Send transaction
+      // Step 7: Send transaction
       const txResponse = await wallet.sendTransaction(transaction)
       
       // Step 7: Wait for confirmation
@@ -359,8 +364,8 @@ function RouteComponent() {
                 </Button>
                 
                 <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg border border-blue-200 mt-3">
-                  <strong>💳 Payment Process:</strong> Click to scan your NFC card with private key. 
-                  The system will automatically transfer ${(getTotalPrice() * 0.0003).toFixed(6)} ETH to the merchant on Scroll Sepolia network.
+                  <strong>💳 Payment Process:</strong> Click to scan your NFC card with private key.
+                  The system will automatically transfer ${getTotalPrice().toFixed(2)} MYRC to the merchant on Arbitrum Mainnet network.
                 </div>
               </CardContent>
             </Card>
@@ -402,11 +407,11 @@ function RouteComponent() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm">Blockchain: Connected to Scroll Sepolia (https://sepolia-rpc.scroll.io/)</span>
+              <span className="text-sm">Blockchain: Connected to Arbitrum Mainnet (MYRC Token)</span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            NFC reader ready for item scanning and payment processing on Scroll network
+            NFC reader ready for item scanning and MYRC token payment processing on Arbitrum Mainnet
           </p>
         </CardContent>
       </Card>
