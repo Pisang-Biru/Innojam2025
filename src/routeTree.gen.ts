@@ -12,6 +12,7 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestRouteImport } from './routes/test'
+import { Route as ResultsRouteImport } from './routes/results'
 import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
@@ -28,6 +29,11 @@ const rootServerRouteImport = createServerRootRoute()
 const TestRoute = TestRouteImport.update({
   id: '/test',
   path: '/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultsRoute = ResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PreferencesRoute = PreferencesRouteImport.update({
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/preferences': typeof PreferencesRoute
+  '/results': typeof ResultsRoute
   '/test': typeof TestRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/preferences': typeof PreferencesRoute
+  '/results': typeof ResultsRoute
   '/test': typeof TestRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/preferences': typeof PreferencesRoute
+  '/results': typeof ResultsRoute
   '/test': typeof TestRoute
   '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/preferences'
+    | '/results'
     | '/test'
     | '/api/nfc-data'
     | '/api/test'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/preferences'
+    | '/results'
     | '/test'
     | '/api/nfc-data'
     | '/api/test'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/preferences'
+    | '/results'
     | '/test'
     | '/api/nfc-data'
     | '/api/test'
@@ -161,6 +173,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
   PreferencesRoute: typeof PreferencesRoute
+  ResultsRoute: typeof ResultsRoute
   TestRoute: typeof TestRoute
   ApiNfcDataRoute: typeof ApiNfcDataRoute
   ApiTestRoute: typeof ApiTestRoute
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       path: '/test'
       fullPath: '/test'
       preLoaderRoute: typeof TestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/results': {
+      id: '/results'
+      path: '/results'
+      fullPath: '/results'
+      preLoaderRoute: typeof ResultsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/preferences': {
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
   PreferencesRoute: PreferencesRoute,
+  ResultsRoute: ResultsRoute,
   TestRoute: TestRoute,
   ApiNfcDataRoute: ApiNfcDataRoute,
   ApiTestRoute: ApiTestRoute,

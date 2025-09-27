@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/preferences')({
@@ -6,6 +6,7 @@ export const Route = createFileRoute('/preferences')({
 })
 
 function PreferencesPage() {
+  const navigate = useNavigate()
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [foodPreferences, setFoodPreferences] = useState<string[]>([])
   const [budgetLevel, setBudgetLevel] = useState<string>('')
@@ -15,12 +16,92 @@ function PreferencesPage() {
   const [timePreferences, setTimePreferences] = useState<string[]>([])
   const [specialNeeds, setSpecialNeeds] = useState<string[]>([])
   const [mood, setMood] = useState<string>('')
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false)
 
   const toggleSelection = (item: string, list: string[], setList: (list: string[]) => void) => {
     if (list.includes(item)) {
       setList(list.filter(i => i !== item))
     } else {
       setList([...list, item])
+    }
+  }
+
+  const handleFindSpots = async () => {
+    setIsDetectingLocation(true)
+
+    try {
+      // Check if geolocation is supported
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by this browser.')
+        setIsDetectingLocation(false)
+        return
+      }
+
+      // Get user's current position
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+          }
+        )
+      })
+
+      const { latitude, longitude } = position.coords
+
+      // Prepare user preferences data
+      const userPreferences = {
+        categories: selectedCategories,
+        foodPreferences,
+        budgetLevel,
+        ambience,
+        maxDistance,
+        transport,
+        timePreferences,
+        specialNeeds,
+        mood,
+        location: {
+          latitude,
+          longitude,
+          timestamp: new Date().toISOString()
+        }
+      }
+
+      // Navigate to results page with preferences and location data
+      navigate({
+        to: '/results',
+        search: {
+          preferences: JSON.stringify(userPreferences)
+        }
+      })
+
+    } catch (error) {
+      console.error('Error getting location:', error)
+      
+      // Handle different types of location errors
+      if (error instanceof GeolocationPositionError) {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            alert('Location access denied. Please enable location permissions and try again.')
+            break
+          case error.POSITION_UNAVAILABLE:
+            alert('Location information is unavailable. Please check your GPS settings.')
+            break
+          case error.TIMEOUT:
+            alert('Location request timed out. Please try again.')
+            break
+          default:
+            alert('An unknown error occurred while getting your location.')
+            break
+        }
+      } else {
+        alert('Unable to detect your location. Please try again.')
+      }
+      
+      setIsDetectingLocation(false)
     }
   }
 
@@ -259,12 +340,32 @@ function PreferencesPage() {
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="text-center pt-6">
-          <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 md:px-12 md:py-4 rounded-full text-base md:text-lg font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
-            Find My Perfect Spots
-          </button>
-        </div>
+         {/* Submit Button */}
+         <div className="text-center pt-6">
+           <button 
+             onClick={handleFindSpots}
+             disabled={isDetectingLocation}
+             className="bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-primary-foreground px-8 py-3 md:px-12 md:py-4 rounded-full text-base md:text-lg font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-3 mx-auto"
+           >
+             {isDetectingLocation ? (
+               <>
+                 <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>
+                 Detecting Location...
+               </>
+             ) : (
+               <>
+                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                 </svg>
+                 Find My Perfect Spots
+               </>
+             )}
+           </button>
+         </div>
       </div>
     </div>
   )
