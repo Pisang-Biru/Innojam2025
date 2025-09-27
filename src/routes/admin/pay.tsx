@@ -97,12 +97,6 @@ function RouteComponent() {
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Point of Sale</h1>
-        <p className="text-muted-foreground">
-          Scan NFC cards to add items to cart and calculate total
-        </p>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Scanner */}

@@ -77,12 +77,6 @@ function RouteComponent() {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Create Item</h1>
-        <p className="text-muted-foreground">
-          Create a new item and write it as JSON data to an NFC card
-        </p>
-      </div>
 
       {/* Create Item Form */}
       <Card className="mb-6">

@@ -40,13 +40,6 @@ function RouteComponent() {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Create Private Key Card</h1>
-        <p className="text-muted-foreground">
-          Generate a new private key and store it on an NFC card
-        </p>
-      </div>
-
       {/* Create PK Card Form */}
       <Card className="mb-6">
         <CardHeader>

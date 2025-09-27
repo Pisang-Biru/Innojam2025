@@ -37,12 +37,6 @@ function RouteComponent() {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Read Item from NFC</h1>
-        <p className="text-muted-foreground">
-          Scan an NFC card to read the item data stored on it
-        </p>
-      </div>
 
       {/* Read Item Card */}
       <Card className="mb-6">
