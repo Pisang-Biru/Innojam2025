@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
 import { Route as ApiTest2RouteImport } from './routes/api.test2'
 import { Route as ApiTestRouteImport } from './routes/api/test'
+import { Route as ApiNfcDataRouteImport } from './routes/api/nfc-data'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
 import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
@@ -59,6 +60,11 @@ const ApiTestRoute = ApiTestRouteImport.update({
   path: '/api/test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNfcDataRoute = ApiNfcDataRouteImport.update({
+  id: '/api/nfc-data',
+  path: '/api/nfc-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
   path: '/demo/start/server-funcs',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/preferences': typeof PreferencesRoute
   '/test': typeof TestRoute
+  '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/preferences': typeof PreferencesRoute
   '/test': typeof TestRoute
+  '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/preferences': typeof PreferencesRoute
   '/test': typeof TestRoute
+  '/api/nfc-data': typeof ApiNfcDataRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/preferences'
     | '/test'
+    | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
     | '/demo/tanstack-query'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/preferences'
     | '/test'
+    | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
     | '/demo/tanstack-query'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/preferences'
     | '/test'
+    | '/api/nfc-data'
     | '/api/test'
     | '/api/test2'
     | '/demo/tanstack-query'
@@ -150,6 +162,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   PreferencesRoute: typeof PreferencesRoute
   TestRoute: typeof TestRoute
+  ApiNfcDataRoute: typeof ApiNfcDataRoute
   ApiTestRoute: typeof ApiTestRoute
   ApiTest2Route: typeof ApiTest2Route
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
@@ -229,6 +242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/nfc-data': {
+      id: '/api/nfc-data'
+      path: '/api/nfc-data'
+      fullPath: '/api/nfc-data'
+      preLoaderRoute: typeof ApiNfcDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
       path: '/demo/start/server-funcs'
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   PreferencesRoute: PreferencesRoute,
   TestRoute: TestRoute,
+  ApiNfcDataRoute: ApiNfcDataRoute,
   ApiTestRoute: ApiTestRoute,
   ApiTest2Route: ApiTest2Route,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
