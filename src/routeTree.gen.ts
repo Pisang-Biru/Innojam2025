@@ -12,14 +12,13 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestRouteImport } from './routes/test'
-import { Route as BookingRouteImport } from './routes/booking'
+import { Route as PreferencesRouteImport } from './routes/preferences'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
 import { Route as ApiTest2RouteImport } from './routes/api.test2'
 import { Route as ApiTestRouteImport } from './routes/api/test'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
-import { ServerRoute as ApiDemoTqTodosServerRouteImport } from './routes/api.demo-tq-todos'
 import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -29,9 +28,9 @@ const TestRoute = TestRouteImport.update({
   path: '/test',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BookingRoute = BookingRouteImport.update({
-  id: '/booking',
-  path: '/booking',
+const PreferencesRoute = PreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -64,11 +63,6 @@ const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
   path: '/demo/start/api-request',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiDemoTqTodosServerRoute = ApiDemoTqTodosServerRouteImport.update({
-  id: '/api/demo-tq-todos',
-  path: '/api/demo-tq-todos',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
 const ApiDemoNamesServerRoute = ApiDemoNamesServerRouteImport.update({
   id: '/api/demo-names',
   path: '/api/demo-names',
@@ -77,7 +71,7 @@ const ApiDemoNamesServerRoute = ApiDemoNamesServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/booking': typeof BookingRoute
+  '/preferences': typeof PreferencesRoute
   '/test': typeof TestRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -87,7 +81,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/booking': typeof BookingRoute
+  '/preferences': typeof PreferencesRoute
   '/test': typeof TestRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -98,7 +92,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/booking': typeof BookingRoute
+  '/preferences': typeof PreferencesRoute
   '/test': typeof TestRoute
   '/api/test': typeof ApiTestRoute
   '/api/test2': typeof ApiTest2Route
@@ -110,7 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/booking'
+    | '/preferences'
     | '/test'
     | '/api/test'
     | '/api/test2'
@@ -120,7 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/booking'
+    | '/preferences'
     | '/test'
     | '/api/test'
     | '/api/test2'
@@ -130,7 +124,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/booking'
+    | '/preferences'
     | '/test'
     | '/api/test'
     | '/api/test2'
@@ -141,7 +135,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BookingRoute: typeof BookingRoute
+  PreferencesRoute: typeof PreferencesRoute
   TestRoute: typeof TestRoute
   ApiTestRoute: typeof ApiTestRoute
   ApiTest2Route: typeof ApiTest2Route
@@ -151,28 +145,24 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/demo-names': typeof ApiDemoNamesServerRoute
-  '/api/demo-tq-todos': typeof ApiDemoTqTodosServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/demo-names': typeof ApiDemoNamesServerRoute
-  '/api/demo-tq-todos': typeof ApiDemoTqTodosServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/demo-names': typeof ApiDemoNamesServerRoute
-  '/api/demo-tq-todos': typeof ApiDemoTqTodosServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/demo-names' | '/api/demo-tq-todos'
+  fullPaths: '/api/demo-names'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/demo-names' | '/api/demo-tq-todos'
-  id: '__root__' | '/api/demo-names' | '/api/demo-tq-todos'
+  to: '/api/demo-names'
+  id: '__root__' | '/api/demo-names'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiDemoNamesServerRoute: typeof ApiDemoNamesServerRoute
-  ApiDemoTqTodosServerRoute: typeof ApiDemoTqTodosServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -184,11 +174,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/booking': {
-      id: '/booking'
-      path: '/booking'
-      fullPath: '/booking'
-      preLoaderRoute: typeof BookingRouteImport
+    '/preferences': {
+      id: '/preferences'
+      path: '/preferences'
+      fullPath: '/preferences'
+      preLoaderRoute: typeof PreferencesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -237,13 +227,6 @@ declare module '@tanstack/react-router' {
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
-    '/api/demo-tq-todos': {
-      id: '/api/demo-tq-todos'
-      path: '/api/demo-tq-todos'
-      fullPath: '/api/demo-tq-todos'
-      preLoaderRoute: typeof ApiDemoTqTodosServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
     '/api/demo-names': {
       id: '/api/demo-names'
       path: '/api/demo-names'
@@ -256,7 +239,7 @@ declare module '@tanstack/react-start/server' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BookingRoute: BookingRoute,
+  PreferencesRoute: PreferencesRoute,
   TestRoute: TestRoute,
   ApiTestRoute: ApiTestRoute,
   ApiTest2Route: ApiTest2Route,
@@ -269,7 +252,6 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiDemoNamesServerRoute: ApiDemoNamesServerRoute,
-  ApiDemoTqTodosServerRoute: ApiDemoTqTodosServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)
