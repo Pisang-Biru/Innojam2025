@@ -273,7 +273,7 @@ function RouteComponent() {
         <CardContent>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm">Connected to http://192.168.0.171:8000/create-item</span>
+            <span className="text-sm">Connected to https://nfc.hrzhkm.xyz/create-item</span>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             Make sure the Raspberry Pi NFC server is running and an NFC card is ready

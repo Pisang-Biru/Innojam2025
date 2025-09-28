@@ -1,6 +1,6 @@
 // NFC API service functions for interfacing with the FastAPI backend
 
-const BASE_URL = 'http://192.168.0.171:8000';
+const BASE_URL = 'https://nfc.hrzhkm.xyz';
 
 // Request/Response types matching the FastAPI models
 export interface WriteHexRequest {

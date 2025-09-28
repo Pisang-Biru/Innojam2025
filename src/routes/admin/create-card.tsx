@@ -65,8 +65,14 @@ function RouteComponent() {
       // Get the private key without the '0x' prefix for NFC writing
       const privateKeyHex = privateKeyWithPrefix.slice(2)
       
+      // Ensure we only have the 64-character private key hex
+      const cleanPrivateKeyHex = privateKeyHex.substring(0, 64)
+      
+      console.log('Private key hex to write:', cleanPrivateKeyHex)
+      console.log('Length:', cleanPrivateKeyHex.length)
+      
       // Write the private key to NFC card
-      const writeResult: WriteHexResponse = await nfcApi.writeHexToNFC(privateKeyHex)
+      const writeResult: WriteHexResponse = await nfcApi.writeHexToNFC(cleanPrivateKeyHex)
       
       // Create the results object
       const results: PrivateKeyCardResults = {
@@ -259,7 +265,7 @@ function RouteComponent() {
         <CardContent>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm">Connected to http://192.168.0.171:8000/write-pk</span>
+            <span className="text-sm">Connected to https://nfc.hrzhkm.xyz/write-pk</span>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             Make sure the Raspberry Pi NFC server is running and an NFC card is ready
