@@ -458,114 +458,116 @@ function ResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="container mx-auto px-6 max-w-4xl">
+    <div className="min-h-screen bg-background py-4 sm:py-8 md:py-12">
+      <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-16">
-          <Link to="/preferences" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-8 text-sm font-medium transition-colors">
+        <div className="text-center mb-8 sm:mb-12 md:mb-16">
+          <Link to="/preferences" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-6 sm:mb-8 text-sm font-medium transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Preferences
           </Link>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 sm:mb-6 px-2">
             Perfect Spots Found! 🎯
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
             Based on your location and preferences
           </p>
         </div>
 
         {/* Location Information */}
-        <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-14 h-14 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+          <div className="flex items-start gap-3 sm:gap-4 mb-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-card-foreground mb-1">📍 Your Current Location</h2>
-              <p className="text-muted-foreground text-sm">Real-time location detected from your device</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-card-foreground mb-1">📍 Your Current Location</h2>
+              <p className="text-muted-foreground text-xs sm:text-sm">Real-time location detected from your device</p>
             </div>
           </div>
           
           {locationInfo.loading ? (
-            <div className="bg-secondary rounded-2xl p-4">
+            <div className="bg-secondary rounded-xl sm:rounded-2xl p-3 sm:p-4">
               <div className="flex items-center gap-3 text-muted-foreground">
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span className="font-medium">Getting your exact address...</span>
+                <span className="font-medium text-sm sm:text-base">Getting your exact address...</span>
               </div>
             </div>
           ) : (
-            <div className="bg-secondary rounded-2xl p-4 space-y-3">
+            <div className="bg-secondary rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <span className="text-lg">🏠</span>
-                <div>
-                  <p className="text-card-foreground font-bold text-lg leading-tight">{locationInfo.address}</p>
-                  <p className="text-muted-foreground text-sm mt-1">
+                <span className="text-base sm:text-lg flex-shrink-0">🏠</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-card-foreground font-bold text-base sm:text-lg leading-tight break-words">{locationInfo.address}</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm mt-1">
                     {locationInfo.city}, {locationInfo.state}, {locationInfo.country}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 pt-2 border-t border-border/50">
-                <span className="text-sm">🗺️</span>
-                <p className="text-muted-foreground text-xs">
-                  Coordinates: {preferences.location.latitude.toFixed(6)}, {preferences.location.longitude.toFixed(6)}
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-2 border-t border-border/50">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm flex-shrink-0">🗺️</span>
+                  <p className="text-muted-foreground text-xs truncate">
+                    {preferences.location.latitude.toFixed(4)}, {preferences.location.longitude.toFixed(4)}
+                  </p>
+                </div>
                 <button 
                   onClick={() => window.open(`https://www.google.com/maps?q=${preferences.location.latitude},${preferences.location.longitude}`, '_blank')}
-                  className="ml-auto text-primary text-xs hover:underline font-medium"
+                  className="text-primary text-xs hover:underline font-medium flex-shrink-0 self-start sm:self-center"
                 >
                   View on Maps →
                 </button>
               </div>
               
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Detected at {new Date(preferences.location.timestamp).toLocaleTimeString()}</span>
+                <span className="truncate">Detected at {new Date(preferences.location.timestamp).toLocaleTimeString()}</span>
               </div>
             </div>
           )}
         </div>
 
         {/* User Preferences Summary */}
-        <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
-          <h2 className="text-2xl font-bold text-card-foreground mb-6">Your Preferences</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-card-foreground mb-4 sm:mb-6">Your Preferences</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
             {preferences.categories.length > 0 && (
-              <div>
+              <div className="break-words">
                 <span className="font-medium text-card-foreground">Categories: </span>
                 <span className="text-muted-foreground">{preferences.categories.join(', ')}</span>
               </div>
             )}
             {preferences.budgetLevel && (
-              <div>
+              <div className="break-words">
                 <span className="font-medium text-card-foreground">Budget: </span>
                 <span className="text-muted-foreground">{preferences.budgetLevel}</span>
               </div>
             )}
             {preferences.maxDistance && (
-              <div>
+              <div className="break-words">
                 <span className="font-medium text-card-foreground">Max Distance: </span>
                 <span className="text-muted-foreground">{preferences.maxDistance}</span>
               </div>
             )}
             {preferences.transport && (
-              <div>
+              <div className="break-words">
                 <span className="font-medium text-card-foreground">Transport: </span>
                 <span className="text-muted-foreground">{preferences.transport}</span>
               </div>
             )}
             {preferences.mood && (
-              <div>
+              <div className="break-words">
                 <span className="font-medium text-card-foreground">Mood: </span>
                 <span className="text-muted-foreground">{preferences.mood}</span>
               </div>
@@ -575,49 +577,49 @@ function ResultsPage() {
 
         {/* Loading Status */}
         {premiseLoading && (
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
+          <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
             <div className="flex items-center gap-3">
-              <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span className="text-card-foreground font-medium">Loading premises data for {locationInfo.state}...</span>
+              <span className="text-card-foreground font-medium text-sm sm:text-base">Loading premises data for {locationInfo.state}...</span>
             </div>
           </div>
         )}
 
         {premiseError && (
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
-            <div className="flex items-center gap-3">
-              <span className="text-orange-500">⚠️</span>
-              <span className="text-card-foreground font-medium">{premiseError}</span>
+          <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+            <div className="flex items-start gap-3">
+              <span className="text-orange-500 flex-shrink-0">⚠️</span>
+              <span className="text-card-foreground font-medium text-sm sm:text-base break-words">{premiseError}</span>
             </div>
           </div>
         )}
 
         {/* AI Analysis Status */}
         {aiLoading && (
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
-            <div className="flex items-center gap-3">
-              <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+            <div className="flex items-start gap-3">
+              <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0 mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <div>
-                <span className="text-card-foreground font-medium">🤖 AI is analyzing your preferences...</span>
-                <p className="text-muted-foreground text-sm mt-1">Finding the perfect personalized spots for you</p>
+              <div className="min-w-0 flex-1">
+                <span className="text-card-foreground font-medium text-sm sm:text-base">🤖 AI is analyzing your preferences...</span>
+                <p className="text-muted-foreground text-xs sm:text-sm mt-1">Finding the perfect personalized spots for you</p>
               </div>
             </div>
           </div>
         )}
 
         {aiError && (
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
-            <div className="flex items-center gap-3">
-              <span className="text-orange-500">🤖</span>
-              <div>
-                <span className="text-card-foreground font-medium">AI analysis unavailable</span>
-                <p className="text-muted-foreground text-sm mt-1">Showing basic recommendations instead</p>
+          <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+            <div className="flex items-start gap-3">
+              <span className="text-orange-500 flex-shrink-0">🤖</span>
+              <div className="min-w-0 flex-1">
+                <span className="text-card-foreground font-medium text-sm sm:text-base">AI analysis unavailable</span>
+                <p className="text-muted-foreground text-xs sm:text-sm mt-1">Showing basic recommendations instead</p>
               </div>
             </div>
           </div>
@@ -625,12 +627,12 @@ function ResultsPage() {
 
         {/* AI Analysis Summary */}
         {analysisSummary && !aiLoading && (
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
+          <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
             <div className="flex items-start gap-3">
-              <span className="text-2xl">🤖</span>
-              <div className="flex-1">
-                <h3 className="text-card-foreground font-bold mb-2">AI Analysis Summary</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{analysisSummary}</p>
+              <span className="text-xl sm:text-2xl flex-shrink-0">🤖</span>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-card-foreground font-bold mb-2 text-sm sm:text-base">AI Analysis Summary</h3>
+                <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed break-words">{analysisSummary}</p>
               </div>
             </div>
           </div>
@@ -638,47 +640,49 @@ function ResultsPage() {
 
         {/* Premises List */}
         <div>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-card-foreground">
-                {useAIRecommendations ? 'AI Personalized Recommendations' : 'Nearby Cyberjaya Spots'} ({displayData.length})
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <h2 className="text-xl sm:text-2xl font-bold text-card-foreground">
+                {useAIRecommendations ? 'AI Recommendations' : 'Cyberjaya Spots'} ({displayData.length})
               </h2>
-              {premiseData.length > 0 && (
-                <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
-                  Government Data
-                </span>
-              )}
-              {useAIRecommendations && aiRecommendations.length > 0 && (
-                <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
-                  🤖 AI Powered
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {premiseData.length > 0 && (
+                  <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                    Government Data
+                  </span>
+                )}
+                {useAIRecommendations && aiRecommendations.length > 0 && (
+                  <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                    🤖 AI Powered
+                  </span>
+                )}
+              </div>
             </div>
             
             {/* Toggle between AI and basic recommendations */}
             {aiRecommendations.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Basic</span>
+              <div className="flex items-center gap-2 self-start sm:self-center">
+                <span className="text-xs sm:text-sm text-muted-foreground">Basic</span>
                 <button
                   onClick={() => setUseAIRecommendations(!useAIRecommendations)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
                     useAIRecommendations ? 'bg-primary' : 'bg-secondary'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      useAIRecommendations ? 'translate-x-6' : 'translate-x-1'
+                    className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                      useAIRecommendations ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
-                <span className="text-sm text-muted-foreground">AI</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">AI</span>
               </div>
             )}
           </div>
           
           {displayData.length === 0 ? (
-            <div className="bg-card border border-border rounded-3xl p-8 text-center">
-              <p className="text-muted-foreground mb-4">
+            <div className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center">
+              <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                 {premiseLoading || aiLoading
                   ? "Loading data..." 
                   : "No premises found for your location."
@@ -686,76 +690,74 @@ function ResultsPage() {
               </p>
               <Link 
                 to="/preferences" 
-                className="text-primary hover:underline font-medium"
+                className="text-primary hover:underline font-medium text-sm sm:text-base"
               >
                 Try again with different location
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {displayData.map((premise) => (
-                <div key={premise.id} className={`bg-card border rounded-2xl p-6 hover:shadow-lg transition-all ${
+                <div key={premise.id} className={`bg-card border rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all ${
                   premise.isAIRecommended 
                     ? 'border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10' 
                     : 'border-border'
                 }`}>
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                       premise.isAIRecommended 
                         ? 'bg-primary/20' 
                         : 'bg-primary/10'
                     }`}>
-                      <span className={`font-bold text-lg ${
+                      <span className={`font-bold text-base sm:text-lg ${
                         premise.isAIRecommended ? 'text-primary' : 'text-primary'
                       }`}>
                         {premise.isAIRecommended ? '🤖' : '🏢'}
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="text-lg font-bold text-card-foreground">{premise.name}</h3>
-                          <div className="flex items-center gap-2">
-                            <p className="text-muted-foreground text-sm">{premise.type}</p>
-                            <span className="bg-secondary text-muted-foreground px-2 py-0.5 rounded text-xs font-mono">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base sm:text-lg font-bold text-card-foreground break-words">{premise.name}</h3>
+                          <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                            <p className="text-muted-foreground text-xs sm:text-sm">{premise.type}</p>
+                            <span className="bg-secondary text-muted-foreground px-1.5 sm:px-2 py-0.5 rounded text-xs font-mono">
                               {premise.premiseCode}
                             </span>
                             {premise.isAIRecommended && premise.aiScore && (
-                              <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-medium">
+                              <span className="bg-primary/20 text-primary px-1.5 sm:px-2 py-0.5 rounded text-xs font-medium">
                                 Score: {premise.aiScore}/100
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex flex-col gap-1">
-                            <span className="bg-secondary text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
-                              {premise.state}
+                        <div className="flex sm:flex-col gap-1 sm:gap-1 flex-shrink-0">
+                          <span className="bg-secondary text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+                            {premise.state}
+                          </span>
+                          {premise.distance !== undefined && (
+                            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                              {premise.distance.toFixed(1)} km
                             </span>
-                            {premise.distance !== undefined && (
-                              <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
-                                {premise.distance.toFixed(1)} km
-                              </span>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 mb-3 text-sm">
-                        <span className="text-muted-foreground">📍</span>
-                        <p className="text-muted-foreground">{premise.address}</p>
+                      <div className="flex items-start gap-2 mb-3 text-xs sm:text-sm">
+                        <span className="text-muted-foreground flex-shrink-0 mt-0.5">📍</span>
+                        <p className="text-muted-foreground break-words">{premise.address}</p>
                       </div>
 
                       {/* AI-specific content */}
                       {premise.isAIRecommended && premise.aiReason && (
-                        <div className="mt-3 p-3 bg-secondary border border-border rounded-xl">
+                        <div className="mt-3 p-3 bg-secondary border border-border rounded-lg sm:rounded-xl">
                           <div className="flex items-start gap-2">
-                            <span className="text-primary text-sm">💡</span>
-                            <div>
-                              <p className="text-card-foreground text-sm font-medium mb-1">AI Analysis:</p>
-                              <p className="text-muted-foreground text-sm leading-relaxed">{premise.aiReason}</p>
+                            <span className="text-primary text-sm flex-shrink-0">💡</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-card-foreground text-xs sm:text-sm font-medium mb-1">AI Analysis:</p>
+                              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed break-words">{premise.aiReason}</p>
                               {premise.personalizedNote && (
-                                <p className="text-muted-foreground text-xs mt-2 italic">
+                                <p className="text-muted-foreground text-xs mt-2 italic break-words">
                                   "{premise.personalizedNote}"
                                 </p>
                               )}
