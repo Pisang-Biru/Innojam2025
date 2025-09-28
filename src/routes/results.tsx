@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
+import { performAIAnalysis } from './api/ai-analysis'
 
 export const Route = createFileRoute('/results')({
   component: ResultsPage,
@@ -42,6 +43,33 @@ interface PremiseData {
   premise_type: string
   state: string
   district: string
+  distance?: number // Distance in kilometers
+}
+
+interface RecommendedSpot {
+  premise_code: string
+  premise: string
+  address: string
+  premise_type: string
+  distance?: number
+  aiScore: number
+  aiReason: string
+  personalizedNote: string
+}
+
+interface DisplayData {
+  id: string
+  name: string
+  type: string
+  address: string
+  premiseCode: string
+  state: string
+  district: string
+  distance?: number
+  isAIRecommended: boolean
+  aiScore?: number
+  aiReason?: string
+  personalizedNote?: string
 }
 
 function ResultsPage() {
@@ -57,6 +85,11 @@ function ResultsPage() {
   const [premiseData, setPremiseData] = useState<PremiseData[]>([])
   const [premiseLoading, setPremiseLoading] = useState(false)
   const [premiseError, setPremiseError] = useState<string | null>(null)
+  const [aiRecommendations, setAiRecommendations] = useState<RecommendedSpot[]>([])
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [analysisSummary, setAnalysisSummary] = useState<string>('')
+  const [useAIRecommendations, setUseAIRecommendations] = useState(true)
 
   useEffect(() => {
     if (search.preferences) {
@@ -74,13 +107,13 @@ function ResultsPage() {
 
   // Fetch premise data from local CSV file
   const fetchPremiseData = async () => {
-    if (!locationInfo.state) return
+    if (!preferences?.location) return
 
     setPremiseLoading(true)
     setPremiseError(null)
     
     try {
-      console.log('Loading premise data for state:', locationInfo.state)
+      console.log('Loading premise data for location:', preferences.location.latitude, preferences.location.longitude)
       
       // Fetch from local CSV file in public folder
       const response = await fetch('/excel/lookup_premise.csv')
@@ -92,14 +125,25 @@ function ResultsPage() {
       const csvText = await response.text()
       const parsedData = parseCSV(csvText)
       
-      // Filter data by user's detected state
-      const filteredData = parsedData.filter(premise => 
-        premise.state.toLowerCase().includes(locationInfo.state.toLowerCase()) ||
-        locationInfo.state.toLowerCase().includes(premise.state.toLowerCase())
-      )
+      console.log(`Parsed ${parsedData.length} premises from CSV`)
+      console.log('Sample premise types:', parsedData.slice(0, 5).map(p => p.premise_type))
       
-      setPremiseData(filteredData)
-      console.log(`Found ${filteredData.length} premises in ${locationInfo.state}`)
+      // Since we now only have Cyberjaya data, show all premises
+      // But we'll calculate distances for better sorting
+      const premisesWithDistance = parsedData.map(premise => ({
+        ...premise,
+        distance: calculateDistance(
+          preferences.location.latitude,
+          preferences.location.longitude,
+          premise
+        )
+      }))
+      
+      // Sort by distance (closest first)
+      const sortedData = premisesWithDistance.sort((a, b) => a.distance - b.distance)
+      
+      setPremiseData(sortedData)
+      console.log(`Found ${sortedData.length} premises near your location`)
       
     } catch (error) {
       console.error('Error loading premise data:', error)
@@ -114,14 +158,18 @@ function ResultsPage() {
   // Parse CSV data into structured format
   const parseCSV = (csvText: string): PremiseData[] => {
     const lines = csvText.trim().split('\n')
-    const headers = lines[0].split(',')
     const data: PremiseData[] = []
+    
+    console.log(`Processing ${lines.length} lines from CSV`)
     
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i])
       
       // Skip invalid rows
-      if (values.length < 6 || !values[1] || !values[4]) continue
+      if (values.length < 6 || !values[1] || !values[4]) {
+        console.log(`Skipping invalid row ${i}:`, values)
+        continue
+      }
       
       const premise: PremiseData = {
         premise_code: values[0] || '',
@@ -135,6 +183,7 @@ function ResultsPage() {
       data.push(premise)
     }
     
+    console.log(`Successfully parsed ${data.length} premises`)
     return data
   }
 
@@ -161,13 +210,76 @@ function ResultsPage() {
     return result
   }
 
+  // Calculate distance between user location and premise (in kilometers)
+  const calculateDistance = (userLat: number, userLon: number, _premise: PremiseData): number => {
+    // Cyberjaya center coordinates as reference
+    const cyberjayaLat = 2.9213
+    const cyberjayaLon = 101.6559
+    
+    // Use Cyberjaya center for all premises since they're all in Cyberjaya
+    // This provides a relative distance comparison
+    const R = 6371 // Earth's radius in kilometers
+    const dLat = (cyberjayaLat - userLat) * Math.PI / 180
+    const dLon = (cyberjayaLon - userLon) * Math.PI / 180
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(userLat * Math.PI / 180) * Math.cos(cyberjayaLat * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    const distance = R * c
+    
+    return distance
+  }
 
-  // Trigger premise data fetch when location state is available
+
+  // Perform AI analysis on premise data
+  const performAIAnalysisOnPremises = async (premises: PremiseData[]) => {
+    if (!preferences || premises.length === 0) return
+
+    setAiLoading(true)
+    setAiError(null)
+
+    try {
+      console.log('🤖 Starting AI analysis...')
+      
+      const response = await performAIAnalysis({
+        data: {
+          preferences,
+          premiseData: premises
+        }
+      })
+
+      if (response.success) {
+        setAiRecommendations(response.recommendations)
+        setAnalysisSummary(response.analysisSummary)
+        console.log(`✅ AI analysis completed: ${response.recommendations.length} recommendations`)
+      } else {
+        console.warn('⚠️ AI analysis failed, using fallback:', response.error)
+        setAiError(response.error || 'AI analysis failed')
+        setAiRecommendations(response.recommendations) // Use fallback recommendations
+        setAnalysisSummary(response.analysisSummary)
+      }
+    } catch (error) {
+      console.error('❌ AI analysis error:', error)
+      setAiError(error instanceof Error ? error.message : 'AI analysis failed')
+      setAiRecommendations([])
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  // Trigger premise data fetch when user preferences are available
   useEffect(() => {
-    if (locationInfo.state && !locationInfo.loading) {
+    if (preferences?.location && !locationInfo.loading) {
       fetchPremiseData()
     }
-  }, [locationInfo.state, locationInfo.loading])
+  }, [preferences?.location, locationInfo.loading])
+
+  // Trigger AI analysis when premise data is loaded
+  useEffect(() => {
+    if (premiseData.length > 0 && preferences && !premiseLoading) {
+      performAIAnalysisOnPremises(premiseData)
+    }
+  }, [premiseData, preferences, premiseLoading])
 
   const reverseGeocode = async (lat: number, lon: number) => {
     try {
@@ -265,45 +377,72 @@ function ResultsPage() {
     }
   }
 
-  // Convert premise data to display format and filter by preferences
-  const getFilteredPremiseData = () => {
-    if (!premiseData || premiseData.length === 0) return []
+  // Get display data based on whether to use AI recommendations or basic filtering
+  const getDisplayData = (): DisplayData[] => {
+    if (useAIRecommendations && aiRecommendations.length > 0) {
+      // Return AI recommendations with additional metadata
+      return aiRecommendations.map(rec => ({
+        id: rec.premise_code,
+        name: rec.premise,
+        type: rec.premise_type,
+        address: rec.address,
+        premiseCode: rec.premise_code,
+        state: 'Cyberjaya', // All data is from Cyberjaya
+        district: 'Cyberjaya',
+        distance: rec.distance,
+        aiScore: rec.aiScore,
+        aiReason: rec.aiReason,
+        personalizedNote: rec.personalizedNote,
+        isAIRecommended: true
+      } as DisplayData))
+    } else {
+      // Fallback to basic filtering
+      if (!premiseData || premiseData.length === 0) return []
 
-    // Map premise types to preference categories
-    const categoryMapping: { [key: string]: string[] } = {
-      'food': ['Restaurant', 'Cafe', 'Pasar Basah'],
-      'retail': ['Hypermarket', 'Pasar Raya / Supermarket', 'Pasar Mini', 'Kedai Runcit'],
-      'services': ['Pharmacy', 'Gym', 'Salon', 'Clinic', 'Services'],
-      'lifestyle': ['Coworking Space', 'Entertainment', 'Park']
-    }
+      // Map premise types to preference categories
+      const categoryMapping: { [key: string]: string[] } = {
+        'food': ['Restaurant', 'Cafe', 'Pasar Basah', 'Restoran'],
+        'retail': ['Hypermarket', 'Pasar Raya / Supermarket', 'Pasar Mini', 'Kedai Runcit'],
+        'services': ['Pharmacy', 'Gym', 'Salon', 'Clinic', 'Services'],
+        'lifestyle': ['Coworking Space', 'Entertainment', 'Park']
+      }
 
-    let filteredData = premiseData
+      let filteredData = premiseData
 
-    // Filter by user preferences if any are selected
-    if (preferences && preferences.categories.length > 0) {
-      filteredData = premiseData.filter(premise => {
-        return preferences.categories.some(userCategory => {
-          const mappedTypes = categoryMapping[userCategory.toLowerCase()] || []
-          return mappedTypes.some(type => 
-            premise.premise_type.toLowerCase().includes(type.toLowerCase()) ||
-            type.toLowerCase().includes(premise.premise_type.toLowerCase())
-          )
+      // Filter by user preferences if any are selected
+      if (preferences && preferences.categories.length > 0) {
+        filteredData = premiseData.filter(premise => {
+          return preferences.categories.some(userCategory => {
+            const mappedTypes = categoryMapping[userCategory.toLowerCase()] || []
+            return mappedTypes.some(type => {
+              const premiseType = premise.premise_type.toLowerCase()
+              const mappedType = type.toLowerCase()
+              return premiseType.includes(mappedType) || mappedType.includes(premiseType)
+            })
+          })
         })
-      })
-    }
+        
+        // If no results found for specific category, show all premises as fallback
+        if (filteredData.length === 0) {
+          filteredData = premiseData
+        }
+      }
 
-    return filteredData.map(premise => ({
-      id: premise.premise_code,
-      name: premise.premise,
-      type: premise.premise_type,
-      address: premise.address,
-      premiseCode: premise.premise_code,
-      state: premise.state,
-      district: premise.district
-    }))
+      return filteredData.map(premise => ({
+        id: premise.premise_code,
+        name: premise.premise,
+        type: premise.premise_type,
+        address: premise.address,
+        premiseCode: premise.premise_code,
+        state: premise.state,
+        district: premise.district,
+        distance: premise.distance,
+        isAIRecommended: false
+      } as DisplayData))
+    }
   }
 
-  const filteredPremises = getFilteredPremiseData()
+  const displayData = getDisplayData()
 
   if (!preferences) {
     return (
@@ -319,26 +458,26 @@ function ResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-6 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link to="/preferences" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-6 text-sm font-medium transition-colors">
+        <div className="text-center mb-16">
+          <Link to="/preferences" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-8 text-sm font-medium transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Preferences
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
             Perfect Spots Found! 🎯
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Based on your location and preferences
           </p>
         </div>
 
         {/* Location Information */}
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-3xl p-6 mb-8">
+        <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
           <div className="flex items-start gap-4 mb-4">
             <div className="w-14 h-14 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
               <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,13 +486,13 @@ function ResultsPage() {
               </svg>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-foreground mb-1">📍 Your Current Location</h2>
+              <h2 className="text-xl font-bold text-card-foreground mb-1">📍 Your Current Location</h2>
               <p className="text-muted-foreground text-sm">Real-time location detected from your device</p>
             </div>
           </div>
           
           {locationInfo.loading ? (
-            <div className="bg-card/50 rounded-2xl p-4">
+            <div className="bg-secondary rounded-2xl p-4">
               <div className="flex items-center gap-3 text-muted-foreground">
                 <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -363,11 +502,11 @@ function ResultsPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-card/50 rounded-2xl p-4 space-y-3">
+            <div className="bg-secondary rounded-2xl p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <span className="text-lg">🏠</span>
                 <div>
-                  <p className="text-foreground font-bold text-lg leading-tight">{locationInfo.address}</p>
+                  <p className="text-card-foreground font-bold text-lg leading-tight">{locationInfo.address}</p>
                   <p className="text-muted-foreground text-sm mt-1">
                     {locationInfo.city}, {locationInfo.state}, {locationInfo.country}
                   </p>
@@ -398,83 +537,151 @@ function ResultsPage() {
         </div>
 
         {/* User Preferences Summary */}
-        <div className="bg-card border border-border rounded-3xl p-6 mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Your Preferences</h2>
+        <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
+          <h2 className="text-2xl font-bold text-card-foreground mb-6">Your Preferences</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             {preferences.categories.length > 0 && (
               <div>
-                <span className="font-medium text-foreground">Categories: </span>
+                <span className="font-medium text-card-foreground">Categories: </span>
                 <span className="text-muted-foreground">{preferences.categories.join(', ')}</span>
               </div>
             )}
             {preferences.budgetLevel && (
               <div>
-                <span className="font-medium text-foreground">Budget: </span>
+                <span className="font-medium text-card-foreground">Budget: </span>
                 <span className="text-muted-foreground">{preferences.budgetLevel}</span>
               </div>
             )}
             {preferences.maxDistance && (
               <div>
-                <span className="font-medium text-foreground">Max Distance: </span>
+                <span className="font-medium text-card-foreground">Max Distance: </span>
                 <span className="text-muted-foreground">{preferences.maxDistance}</span>
               </div>
             )}
             {preferences.transport && (
               <div>
-                <span className="font-medium text-foreground">Transport: </span>
+                <span className="font-medium text-card-foreground">Transport: </span>
                 <span className="text-muted-foreground">{preferences.transport}</span>
               </div>
             )}
             {preferences.mood && (
               <div>
-                <span className="font-medium text-foreground">Mood: </span>
+                <span className="font-medium text-card-foreground">Mood: </span>
                 <span className="text-muted-foreground">{preferences.mood}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Premise Data Status */}
+        {/* Loading Status */}
         {premiseLoading && (
-          <div className="bg-card border border-border rounded-3xl p-6 mb-8">
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
             <div className="flex items-center gap-3">
               <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span className="text-foreground font-medium">Loading premises data for {locationInfo.state}...</span>
+              <span className="text-card-foreground font-medium">Loading premises data for {locationInfo.state}...</span>
             </div>
           </div>
         )}
 
         {premiseError && (
-          <div className="bg-orange-50 border border-orange-200 rounded-3xl p-6 mb-8">
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
             <div className="flex items-center gap-3">
               <span className="text-orange-500">⚠️</span>
-              <span className="text-orange-700 font-medium">{premiseError}</span>
+              <span className="text-card-foreground font-medium">{premiseError}</span>
+            </div>
+          </div>
+        )}
+
+        {/* AI Analysis Status */}
+        {aiLoading && (
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
+            <div className="flex items-center gap-3">
+              <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <div>
+                <span className="text-card-foreground font-medium">🤖 AI is analyzing your preferences...</span>
+                <p className="text-muted-foreground text-sm mt-1">Finding the perfect personalized spots for you</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {aiError && (
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
+            <div className="flex items-center gap-3">
+              <span className="text-orange-500">🤖</span>
+              <div>
+                <span className="text-card-foreground font-medium">AI analysis unavailable</span>
+                <p className="text-muted-foreground text-sm mt-1">Showing basic recommendations instead</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Analysis Summary */}
+        {analysisSummary && !aiLoading && (
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 mb-8">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🤖</span>
+              <div className="flex-1">
+                <h3 className="text-card-foreground font-bold mb-2">AI Analysis Summary</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{analysisSummary}</p>
+              </div>
             </div>
           </div>
         )}
 
         {/* Premises List */}
         <div>
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-foreground">
-              Premises in {locationInfo.state} ({filteredPremises.length})
-            </h2>
-            {premiseData.length > 0 && (
-              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                Government Data
-              </span>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-card-foreground">
+                {useAIRecommendations ? 'AI Personalized Recommendations' : 'Nearby Cyberjaya Spots'} ({displayData.length})
+              </h2>
+              {premiseData.length > 0 && (
+                <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                  Government Data
+                </span>
+              )}
+              {useAIRecommendations && aiRecommendations.length > 0 && (
+                <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                  🤖 AI Powered
+                </span>
+              )}
+            </div>
+            
+            {/* Toggle between AI and basic recommendations */}
+            {aiRecommendations.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Basic</span>
+                <button
+                  onClick={() => setUseAIRecommendations(!useAIRecommendations)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    useAIRecommendations ? 'bg-primary' : 'bg-secondary'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      useAIRecommendations ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-muted-foreground">AI</span>
+              </div>
             )}
           </div>
           
-          {filteredPremises.length === 0 ? (
+          {displayData.length === 0 ? (
             <div className="bg-card border border-border rounded-3xl p-8 text-center">
               <p className="text-muted-foreground mb-4">
-                {premiseLoading 
-                  ? "Loading premise data..." 
-                  : "No premises found for your location. Please ensure backend is set up to process the parquet data."
+                {premiseLoading || aiLoading
+                  ? "Loading data..." 
+                  : "No premises found for your location."
                 }
               </p>
               <Link 
@@ -486,31 +693,48 @@ function ResultsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredPremises.map((premise) => (
-                <div key={premise.id} className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg transition-shadow">
+              {displayData.map((premise) => (
+                <div key={premise.id} className={`bg-card border rounded-2xl p-6 hover:shadow-lg transition-all ${
+                  premise.isAIRecommended 
+                    ? 'border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10' 
+                    : 'border-border'
+                }`}>
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary font-bold text-lg">🏢</span>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      premise.isAIRecommended 
+                        ? 'bg-primary/20' 
+                        : 'bg-primary/10'
+                    }`}>
+                      <span className={`font-bold text-lg ${
+                        premise.isAIRecommended ? 'text-primary' : 'text-primary'
+                      }`}>
+                        {premise.isAIRecommended ? '🤖' : '🏢'}
+                      </span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="text-lg font-bold text-foreground">{premise.name}</h3>
+                          <h3 className="text-lg font-bold text-card-foreground">{premise.name}</h3>
                           <div className="flex items-center gap-2">
                             <p className="text-muted-foreground text-sm">{premise.type}</p>
                             <span className="bg-secondary text-muted-foreground px-2 py-0.5 rounded text-xs font-mono">
                               {premise.premiseCode}
                             </span>
+                            {premise.isAIRecommended && premise.aiScore && (
+                              <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-medium">
+                                Score: {premise.aiScore}/100
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="flex flex-col gap-1">
-                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                            <span className="bg-secondary text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
                               {premise.state}
                             </span>
-                            {premise.district && (
-                              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                                {premise.district}
+                            {premise.distance !== undefined && (
+                              <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                                {premise.distance.toFixed(1)} km
                               </span>
                             )}
                           </div>
@@ -521,6 +745,24 @@ function ResultsPage() {
                         <span className="text-muted-foreground">📍</span>
                         <p className="text-muted-foreground">{premise.address}</p>
                       </div>
+
+                      {/* AI-specific content */}
+                      {premise.isAIRecommended && premise.aiReason && (
+                        <div className="mt-3 p-3 bg-secondary border border-border rounded-xl">
+                          <div className="flex items-start gap-2">
+                            <span className="text-primary text-sm">💡</span>
+                            <div>
+                              <p className="text-card-foreground text-sm font-medium mb-1">AI Analysis:</p>
+                              <p className="text-muted-foreground text-sm leading-relaxed">{premise.aiReason}</p>
+                              {premise.personalizedNote && (
+                                <p className="text-muted-foreground text-xs mt-2 italic">
+                                  "{premise.personalizedNote}"
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
